@@ -1,18 +1,19 @@
 @echo off
-setlocal enabledelayedexpansion
-
-REM Enable better error handling
-set ERRORLEVEL=0
-
-REM Example debug output
-echo Starting build process...
-
-REM Insert your build commands here
-
-if !ERRORLEVEL! NEQ 0 (
-    echo Error: Build command failed with error level !ERRORLEVEL!.
-    exit /b !ERRORLEVEL!
+REM Create build directory if it does not exist
+IF NOT EXIST "build" (
+    echo Creating build directory...
+    mkdir build
+    IF ERRORLEVEL 1 (
+        echo Failed to create build directory.
+        exit /B 1
+    )
 )
+echo Build directory is ready.
 
-echo Build completed successfully.
-exit /b 0
+REM Continue with the build process
+REM Add your build commands here
+
+echo Starting the build process...
+REM Placeholder for actual build commands
+
+echo Build process completed successfully!
