@@ -56,7 +56,8 @@ cd Operating-System
 On Windows, open Command Prompt or PowerShell in the repository directory and run:
 
 ```cmd
-build.bat
+cd boot
+build_and_run.bat
 ```
 
 The script will:
