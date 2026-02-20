@@ -15,7 +15,7 @@ cd %BUILD_DIR%
 
 REM Assemble the .asm file into a raw .bin file using NASM
 REM -f bin specifies raw binary format, -o specifies output file name
-nasm -f bin boot\%SOURCE_NAME% -o %OUTPUT_NAME%
+nasm -f bin ..\%SOURCE_NAME% -o %OUTPUT_NAME%
 
 REM Go back to the original directory
 cd ..
