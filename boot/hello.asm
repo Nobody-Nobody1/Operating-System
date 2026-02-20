@@ -1,10 +1,19 @@
-[BITS 16]\n[ORG 0x7C00]\n\n  
-  mov si, message      ; Point SI to the message\n    call print_string    ; Call the print_string function\n   
- jmp $                ; Infinite loop to halt the CPU\n\nprint_string:\n   
- mov ah, 0x0E        ; BIOS teletype output function\n.next_char:\n   
- lodsb               ; Load next byte from DS:SI into AL\n  
-  or al, al          ; Check if the character is null\n   
- jz .done            ; If null, we are done\n    int 0x10           ; Print the character\n   
- jmp .next_char      ; Repeat for the next character\n.done:\n  
-  ret\n\nmessage db 'Hello, World!', 
-0\n\nTIMES 510 - ($ - $$) db 0 ; Fill the rest of the sector with zeros\nDW 0xAA55               ; Boot signature
+[ORG 0x7C00]          ; BIOS loads bootloader at 0x7C00
+
+cli                   ; Disable interrupts
+mov ax, 0x0000        ; Set segment registers
+mov ds, ax
+mov es, ax
+mov ss, ax
+mov sp, 0x7C00        ; Set stack pointer
+
+; Your code here
+
+cli
+hlt                   ; Halt the processor
+
+; Padding to 510 bytes
+times 510 - ($ - $$) db 0
+
+; Boot signature
+dw 0xAA55             ; Magic bytes (little-endian: 0x55AA)
