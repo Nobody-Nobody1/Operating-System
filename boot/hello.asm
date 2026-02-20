@@ -1,1 +1,9 @@
-[BITS 16]\n[ORG 0x7C00]\n\n    mov si, message      ; Point SI to the message\n    call print_string    ; Call the print_string function\n    jmp $                ; Infinite loop to halt the CPU\n\nprint_string:\n    mov ah, 0x0E        ; BIOS teletype output function\n.next_char:\n    lodsb               ; Load next byte from DS:SI into AL\n    or al, al          ; Check if the character is null\n    jz .done            ; If null, we are done\n    int 0x10           ; Print the character\n    jmp .next_char      ; Repeat for the next character\n.done:\n    ret\n\nmessage db 'Hello, World!', 0\n\nTIMES 510 - ($ - $$) db 0 ; Fill the rest of the sector with zeros\nDW 0xAA55               ; Boot signature
+[BITS 16]\n[ORG 0x7C00]\n\n  
+  mov si, message      ; Point SI to the message\n    call print_string    ; Call the print_string function\n   
+ jmp $                ; Infinite loop to halt the CPU\n\nprint_string:\n   
+ mov ah, 0x0E        ; BIOS teletype output function\n.next_char:\n   
+ lodsb               ; Load next byte from DS:SI into AL\n  
+  or al, al          ; Check if the character is null\n   
+ jz .done            ; If null, we are done\n    int 0x10           ; Print the character\n    jmp .next_char      ; Repeat for the next character\n.done:\n  
+  ret\n\nmessage db 'Hello, World!', 
+0\n\nTIMES 510 - ($ - $$) db 0 ; Fill the rest of the sector with zeros\nDW 0xAA55               ; Boot signature
