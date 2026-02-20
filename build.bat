@@ -1,46 +1,39 @@
 @echo off
 
-REM Create build directory if it doesn't exist
-if not exist build mkdir build
+REM Build script for OS Project
+setlocal
 
-REM Check for boot/hello.asm
-if not exist boot\hello.asm (
-    echo Error: boot/hello.asm not found!
-    exit /b 1
+REM Create build directory
+if not exist build (
+    mkdir build
 )
 
 REM Assemble the bootloader
-nasm -f bin boot/hello.asm -o build/bootloader.bin
-if errorlevel 1 (
-    echo Error: Failed to assemble bootloader.
+nasm -f bin bootloader.asm -o build/bootloader.bin
+if %errorlevel% neq 0 (
+    echo "Error during assembly"
     exit /b 1
 )
 
-REM Verify bootloader size
-set /p size=< build/bootloader.bin
-if %size% LSS 512 (
-    echo Error: Bootloader size is less than 512 bytes.
+REM Create a floppy disk image
+fsutil.exe sparse setfloppy build/floppy.img
+if %errorlevel% neq 0 (
+    echo "Error creating floppy image"
     exit /b 1
 )
 
-REM Create a 1.44MB floppy disk image
-if exist floppy.img del floppy.img
-fallocate -l 1440k floppy.img
-if errorlevel 1 (
-    echo Error: Failed to create floppy image.
-    exit /b 1
-)
-
-REM Write the bootloader to the image
-cat build/bootloader.bin floppy.img > tmp.img
-if errorlevel 1 (
-    echo Error: Failed to write bootloader to image.
+REM Write bootloader to floppy image
+copy /b build/bootloader.bin build/floppy.img
+if %errorlevel% neq 0 (
+    echo "Error writing bootloader to image"
     exit /b 1
 )
 
 REM Launch QEMU
-qemu-system-i386 -fda floppy.img
-if errorlevel 1 (
-    echo Error: QEMU failed to launch.
+qemu-system-i386 -fda build/floppy.img -boot a -m 16M
+if %errorlevel% neq 0 (
+    echo "Error launching QEMU"
     exit /b 1
 )
+echo "Build and launch completed successfully!"
+endlocal
