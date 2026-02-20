@@ -1,6 +1,6 @@
 @echo off
 REM Define source file name
-SET SOURCE_NAME=hello.asm
+SET SOURCE_NAME=boot.asm
 REM Define output directory
 SET BUILD_DIR=build
 REM Define output binary file name
