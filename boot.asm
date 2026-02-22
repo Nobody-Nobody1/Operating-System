@@ -52,7 +52,7 @@ done:
     hlt
 
 message:
-    db "Hello World", 0  ; Null-terminated string
+    db message, "Hello World", 0  ; Null-terminated string
     db "Welcome to my OS!", 0
 
 ; Boot sector padding

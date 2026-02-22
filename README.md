@@ -15,6 +15,8 @@ Before running the build script, you need to install the following tools:
      - Run the installer and follow the prompts
      - Add NASM to your system PATH (or install will do this for you)
    - Verify installation: Open Command Prompt and run `nasm -version`
+   - Documentation: https://nasmnitc.github.io/NASM%20Manual.pdf
+   - Unofficial Documentation: [text](https://linuxvox.com/blog/basic-yet-thorough-assembly-tutorial-linux/#4-assembly-fundamentals)
 
 2. **QEMU (Quick Emulator)**
    - Download: https://www.qemu.org/download/
