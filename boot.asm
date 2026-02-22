@@ -1,51 +1,60 @@
-; boot.asm - Minimal GUI-like OS boot sector for QEMU
+; boot.asm - Minimal boot sector OS for QEMU
 
-[org 0x7C00]          ; BIOS loads boot sector here
+BITS 16                 ; 16-bit real mode
+ORG 0x7C00              ; BIOS loads boot sector here
 
-; --- Set video mode 13h (320x200, 256 colors) ---
-mov ax, 0x0013
-int 0x10
+start:
+    ; Set up segment registers
+    xor ax, ax
+    mov ds, ax
+    mov es, ax
+    mov ss, ax
+    mov sp, 0x7C00       ; Stack grows down from here
+    ; Clear the screen
+    mov ax, 0x0600       ; Scroll up function
+    mov bh, 0x07         ; Text attribute (white on black)
+    mov cx, 0x0000       ; Upper-left corner
+    mov dx, 0x184F       ; Lower-right corner (80x25)
+    int 0x10             ; BIOS video interrupt
 
-; --- Set ES to video memory segment ---
-mov ax, 0xA000
-mov es, ax
+    ; Load message address into SI
+    mov si, message
+    ; Set cursor position
+    mov ah, 0x02
+    mov bh, 0x00         ; Page number
+    mov dh, 0x05         ; Row
+    mov dl, 0x0A         ; Column
+    int 0x10
 
-; --- Draw a rectangle (like a window) ---
-mov cx, 50            ; X start
-mov dx, 50            ; Y start
-mov si, 100           ; Width
-mov di, 60            ; Height
-mov al, 12            ; Color (light red)
+    ; Print message
+    mov si, message
+print_loop:
+    lodsb                ; Load next byte from DS:SI into AL
+    cmp al, 0            ; End of string?
+    lodsb                ; Load next byte from SI into AL
+    cmp al, 0
+    je done
+    mov ah, 0x0E         ; BIOS teletype function
+    mov bh, 0x00         ; Page number
+    mov bl, 0x07         ; Text attribute (light gray on black)
+    int 0x10             ; Call BIOS video interrupt
+    mov ah, 0x0E         ; Teletype output
+    mov bh, 0x00
+    mov bl, 0x07         ; White on black
+    int 0x10
+    jmp print_loop
 
-call draw_rect
+done:
+    hlt                  ; Halt CPU
+    jmp $                ; Infinite loop
+    ; Hang the system
+    cli
+    hlt
 
-; --- Infinite loop ---
-jmp $
+message:
+    db "Hello World", 0  ; Null-terminated string
+    db "Welcome to my OS!", 0
 
-; --- Draw rectangle subroutine ---
-; CX = X, DX = Y, SI = width, DI = height, AL = color
-draw_rect:
-    push bx
-    push dx
-    mov bx, dx        ; current Y
-row_loop:
-    push cx
-    mov dx, cx        ; current X
-    mov cx, si        ; width counter
-col_loop:
-    mov di, bx
-    imul di, 320      ; di = y * 320
-    add di, dx        ; di = y * 320 + x
-    mov [es:di], al   ; set pixel
-    inc dx
-    loop col_loop
-    inc bx
-    dec word [sp]     ; height counter on stack
-    jnz row_loop
-    pop dx
-    pop bx
-    ret
-
-; --- Boot sector padding ---
+; Boot sector padding
 times 510-($-$$) db 0
-dw 0xAA55
+dw 0xAA55          ; Boot signature
