@@ -1,60 +1,64 @@
-; boot.asm - Minimal boot sector OS for QEMU
+; keyboard_irq.asm
+; Assemble: nasm -f bin keyboard_irq.asm -o boot.bin
+; Run: qemu-system-i386 -drive format=raw,file=boot.bin
 
-BITS 16                 ; 16-bit real mode
-ORG 0x7C00              ; BIOS loads boot sector here
+BITS 16
+ORG 0x7C00
 
 start:
-    ; Set up segment registers
+    cli                         ; Disable interrupts during setup
+
+    ; Setup segment registers
     xor ax, ax
     mov ds, ax
     mov es, ax
     mov ss, ax
-    mov sp, 0x7C00       ; Stack grows down from here
-    ; Clear the screen
-    mov ax, 0x0600       ; Scroll up function
-    mov bh, 0x07         ; Text attribute (white on black)
-    mov cx, 0x0000       ; Upper-left corner
-    mov dx, 0x184F       ; Lower-right corner (80x25)
-    int 0x10             ; BIOS video interrupt
+    mov sp, 0x7C00
 
-    ; Load message address into SI
-    mov si, message
-    ; Set cursor position
-    mov ah, 0x02
-    mov bh, 0x00         ; Page number
-    mov dh, 0x05         ; Row
-    mov dl, 0x0A         ; Column
-    int 0x10
+    ; Save old IRQ1 vector (optional, for restoration)
+    mov ax, [0x0004 * 9]        ; Offset of old handler
+    mov [old_irq1_offset], ax
+    mov ax, [0x0004 * 9 + 2]    ; Segment of old handler
+    mov [old_irq1_segment], ax
 
-    ; Print message
-    mov si, message
-print_loop:
-    lodsb                ; Load next byte from DS:SI into AL
-    cmp al, 0            ; End of string?
-    lodsb                ; Load next byte from SI into AL
-    cmp al, 0
-    je done
-    mov ah, 0x0E         ; BIOS teletype function
-    mov bh, 0x00         ; Page number
-    mov bl, 0x07         ; Text attribute (light gray on black)
-    int 0x10             ; Call BIOS video interrupt
-    mov ah, 0x0E         ; Teletype output
+    ; Install our IRQ1 handler
+    mov word [0x0004 * 9], keyboard_handler
+    mov word [0x0004 * 9 + 2], 0x0000
+
+    sti                         ; Enable interrupts
+
+main_loop:
+    hlt                         ; Wait for interrupt (saves CPU)
+    jmp main_loop
+
+; -------------------------
+; IRQ1 Keyboard Handler
+; -------------------------
+keyboard_handler:
+    pusha                       ; Save all registers
+
+    in al, 0x60                 ; Read scan code from keyboard data port
+
+    ; Simple example: print 'K' for any key press
+    mov ah, 0x0E                ; BIOS teletype output
     mov bh, 0x00
-    mov bl, 0x07         ; White on black
+    mov bl, 0x07
+    mov al, 'K'
     int 0x10
-    jmp print_loop
 
-done:
-    hlt                  ; Halt CPU
-    jmp $                ; Infinite loop
-    ; Hang the system
-    cli
-    hlt
+    ; Send End Of Interrupt (EOI) to PIC
+    mov al, 0x20
+    out 0x20, al
 
-message:
-    db message, "Hello World", 0  ; Null-terminated string
-    db "Welcome to my OS!", 0
+    popa
+    iret                        ; Return from interrupt
+
+; -------------------------
+; Data storage
+; -------------------------
+old_irq1_offset dw 0
+old_irq1_segment dw 0
 
 ; Boot sector padding
 times 510-($-$$) db 0
-dw 0xAA55          ; Boot signature
+dw 0xAA55
